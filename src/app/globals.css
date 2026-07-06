@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+@layer base {
+  body {
+    background: theme(colors.canvas.50);
+    color: theme(colors.ink.900);
+  }
+}
+
+@layer components {
+  .wt-card {
+    @apply rounded-xl border border-slate-200/70 bg-white shadow-card;
+  }
+
+  .wt-card-hd {
+    @apply flex items-center justify-between border-b border-slate-200/70 px-4 py-3;
+  }
+
+  .wt-card-title {
+    @apply text-base font-semibold text-ink-900;
+  }
+
+  .wt-muted {
+    @apply text-sm text-ink-500;
+  }
+
+  .wt-input {
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-shadow focus:border-brand-300 focus:ring-2 focus:ring-brand-200;
+  }
+
+  .wt-select {
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-shadow focus:border-brand-300 focus:ring-2 focus:ring-brand-200;
+  }
+
+  .wt-btn {
+    @apply inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-ink-900 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .wt-btn-primary {
+    @apply border-transparent bg-brand px-4 py-2 text-sm text-white hover:bg-brand-600 disabled:hover:bg-brand;
+  }
+
+  .wt-btn-ghost {
+    @apply border-transparent bg-transparent hover:bg-slate-100;
+  }
+
+  .wt-table {
+    @apply w-full text-sm;
+  }
+
+  .wt-th {
+    @apply border-b border-slate-200/70 bg-brand-50 px-3 py-2 text-left font-medium text-ink-700;
+  }
+
+  .wt-td {
+    @apply border-b border-slate-200/70 px-3 py-2 text-ink-700;
+  }
+}
+
