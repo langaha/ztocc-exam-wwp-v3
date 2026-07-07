@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureDb, getDbClient, withTx } from "@/lib/db";
 import { getSessionUserFromRequest } from "@/lib/auth";
-import { callV2Json } from "@/lib/v2Client";
+import { callV2Json, isV2NetworkFailure } from "@/lib/v2Client";
 import { fetchAndUpsertWaybillSnapshot } from "@/lib/waybillSnapshot";
 import { addHoursISO, addMinutesISO, calcApprovalLevel, createOrRefreshInventoryLock, isTerminalTicketStatus, pickApprover } from "@/lib/ticketService";
 
@@ -32,6 +32,16 @@ type WaybillItem = {
   skuCode: string;
   skuQuantity: number;
 };
+
+function toWaybillLookupError(externalCode: string, res: { requestId: string; status: number | null; errorMessage: string }) {
+  if (res.status === 404) {
+    return { error: `未查询到${externalCode}的运单`, requestId: res.requestId, status: 404 };
+  }
+  if (isV2NetworkFailure({ ok: false, requestId: res.requestId, status: res.status, durationMs: 0, errorMessage: res.errorMessage })) {
+    return { error: "网络请求失败", requestId: res.requestId, status: 502 };
+  }
+  return { error: "V2请求失败", requestId: res.requestId, status: 502 };
+}
 
 function calcQtyDiffRatio(scanned: number, expected: number) {
   if (!Number.isFinite(scanned) || !Number.isFinite(expected) || expected <= 0) return 0;
@@ -88,10 +98,15 @@ export async function POST(req: Request) {
   });
 
   if (!validateRes.ok) {
-    return NextResponse.json({ error: "v2 call failed", requestId: validateRes.requestId }, { status: 502 });
+    const err = toWaybillLookupError(externalCode, validateRes);
+    return NextResponse.json({ error: err.error, requestId: err.requestId }, { status: err.status });
   }
   if (!validateRes.data.ok) {
-    return NextResponse.json({ error: "sku not in waybill", reason: validateRes.data.reason ?? "" }, { status: 400 });
+    const reason = String(validateRes.data.reason ?? "").trim();
+    if (reason.toLowerCase().includes("waybill")) {
+      return NextResponse.json({ error: `未查询到${externalCode}的运单`, requestId: validateRes.requestId }, { status: 404 });
+    }
+    return NextResponse.json({ error: "未查询到该运单下的SKU", reason }, { status: 400 });
   }
 
   const itemsRes = await callV2Json<{ items?: WaybillItem[] }>({
@@ -102,7 +117,8 @@ export async function POST(req: Request) {
   });
 
   if (!itemsRes.ok) {
-    return NextResponse.json({ error: "v2 call failed", requestId: itemsRes.requestId }, { status: 502 });
+    const err = toWaybillLookupError(externalCode, itemsRes);
+    return NextResponse.json({ error: err.error, requestId: err.requestId }, { status: err.status });
   }
 
   const items = Array.isArray(itemsRes.data.items) ? itemsRes.data.items : [];

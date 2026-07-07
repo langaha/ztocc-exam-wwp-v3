@@ -1,13 +1,23 @@
 import { NextResponse } from "next/server";
 import { getSessionUserFromRequest } from "@/lib/auth";
 import { fetchAndUpsertWaybillSnapshot } from "@/lib/waybillSnapshot";
-import { callV2Json } from "@/lib/v2Client";
+import { callV2Json, isV2NetworkFailure } from "@/lib/v2Client";
 import { createManualTicket, findOpenSameTypeTicket, listTickets } from "@/lib/ticketService";
 
 function toPositiveInt(v: string | null, fallback: number, max: number) {
   const n = Number(String(v ?? "").trim());
   if (!Number.isFinite(n) || n <= 0) return fallback;
   return Math.min(max, Math.floor(n));
+}
+
+function toWaybillLookupError(externalCode: string, res: { requestId: string; status: number | null; errorMessage: string }) {
+  if (res.status === 404) {
+    return { error: `未查询到${externalCode}的运单`, requestId: res.requestId, status: 404 };
+  }
+  if (isV2NetworkFailure({ ok: false, requestId: res.requestId, status: res.status, durationMs: 0, errorMessage: res.errorMessage })) {
+    return { error: "网络请求失败", requestId: res.requestId, status: 502 };
+  }
+  return { error: "V2请求失败", requestId: res.requestId, status: 502 };
 }
 
 export async function GET(req: Request) {
@@ -60,10 +70,11 @@ export async function POST(req: Request) {
     requestSummary: JSON.stringify({ externalCode }),
   });
   if (!waybillRes.ok) {
-    return NextResponse.json({ error: "v2 call failed", requestId: waybillRes.requestId }, { status: 502 });
+    const err = toWaybillLookupError(externalCode, waybillRes);
+    return NextResponse.json({ error: err.error, requestId: err.requestId }, { status: err.status });
   }
   if (!(waybillRes.data as { waybill?: unknown } | null)?.waybill) {
-    return NextResponse.json({ error: "waybill not found" }, { status: 404 });
+    return NextResponse.json({ error: `未查询到${externalCode}的运单`, requestId: waybillRes.requestId }, { status: 404 });
   }
 
   await fetchAndUpsertWaybillSnapshot(externalCode);
@@ -91,4 +102,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ ok: true, ticket }, { status: 200 });
 }
-

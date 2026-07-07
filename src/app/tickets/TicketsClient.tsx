@@ -58,6 +58,14 @@ export function TicketsClient(props: {
 
   type ApiJson = { error?: unknown; ticket?: { id?: unknown } | null };
 
+  function formatCreateTicketError(error: unknown) {
+    const text = String(error ?? "").trim();
+    if (!text) return "上报失败，请稍后重试";
+    if (text === "网络请求失败") return "网络请求失败，请稍后重试";
+    if (text.startsWith("未查询到")) return text;
+    return `上报失败：${text}`;
+  }
+
   return (
     <div className="grid gap-4">
       <section className="wt-card">
@@ -117,7 +125,7 @@ export function TicketsClient(props: {
                   });
                   const j = (await res.json().catch(() => null)) as ApiJson | null;
                   if (!res.ok) {
-                    setMsg(`上报失败：${String(j?.error ?? res.status)}`);
+                    setMsg(formatCreateTicketError(j?.error ?? res.status));
                     return;
                   }
                   setMsg(`上报成功：${String(j?.ticket?.id ?? "")}`);

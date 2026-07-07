@@ -26,6 +26,20 @@ type CallErr = {
 
 export type V2CallResult<T> = CallOk<T> | CallErr;
 
+export function isV2NetworkFailure(err: CallErr) {
+  if (err.status === null) return true;
+  if (err.status >= 500) return true;
+  const msg = String(err.errorMessage ?? "").toLowerCase();
+  return (
+    msg.includes("fetch failed") ||
+    msg.includes("network") ||
+    msg.includes("timeout") ||
+    msg.includes("aborted") ||
+    msg.includes("econn") ||
+    msg.includes("enotfound")
+  );
+}
+
 function getBaseUrl(): string {
   const envUrl = String(process.env.V2_BASE_URL ?? "").trim();
   const fallbackUrl = "https://ztocc-wwp-exam.vercel.app";

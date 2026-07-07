@@ -10,6 +10,14 @@ export function ScanForm() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
+  function formatScanError(error: unknown) {
+    const text = String(error ?? "").trim();
+    if (!text) return "提交失败，请稍后重试";
+    if (text === "网络请求失败") return "网络请求失败，请稍后重试";
+    if (text.startsWith("未查询到")) return text;
+    return `失败：${text}`;
+  }
+
   return (
     <section className="wt-card">
       <div className="wt-card-hd">
@@ -59,7 +67,7 @@ export function ScanForm() {
                   | { error?: unknown; result?: unknown; ticketId?: unknown; existed?: unknown }
                   | null;
                 if (!res.ok) {
-                  setMsg(`失败：${String(j?.error ?? res.status)}`);
+                  setMsg(formatScanError(j?.error ?? res.status));
                   return;
                 }
                 if (j?.result === "PASS") {
