@@ -20,6 +20,25 @@ function formatTs(value: unknown): string {
   if (!raw) return "";
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return raw;
+  const tz = String(process.env.V3_TIMEZONE ?? "").trim() || "Asia/Shanghai";
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const get = (t: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === t)?.value ?? "";
+  const y = get("year");
+  const m = get("month");
+  const dd = get("day");
+  const hh = get("hour");
+  const mm = get("minute");
+  const ss = get("second");
+  if (y && m && dd && hh && mm && ss) return `${y}-${m}-${dd} ${hh}:${mm}:${ss}`;
   return d.toISOString().slice(0, 19).replace("T", " ");
 }
 
