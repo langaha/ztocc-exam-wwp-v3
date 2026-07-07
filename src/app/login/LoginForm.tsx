@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
-export type LoginUserOption = { id: string; name: string; roles: string[]; enabled: boolean };
+import type { LoginUserOption } from "@/lib/auth";
 
 export function LoginForm(props: { users: LoginUserOption[] }) {
   const router = useRouter();
@@ -65,4 +64,3 @@ export function LoginForm(props: { users: LoginUserOption[] }) {
     </section>
   );
 }
-

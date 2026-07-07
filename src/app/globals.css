@@ -15,6 +15,10 @@ body {
 }
 
 @layer components {
+  .wt-topbar {
+    @apply border-b border-brand-600 bg-brand;
+  }
+
   .wt-card {
     @apply rounded-xl border border-slate-200/70 bg-white shadow-card;
   }
@@ -62,5 +66,16 @@ body {
   .wt-td {
     @apply border-b border-slate-200/70 px-3 py-2 text-ink-700;
   }
-}
 
+  .wt-sidenav {
+    @apply w-52 flex-none border-r border-slate-200/20 bg-gradient-to-b from-brand-900 to-slate-900;
+  }
+
+  .wt-sidenav-item {
+    @apply rounded-lg px-3 py-2 text-sm text-white/85 transition-colors hover:bg-white/10 hover:text-white;
+  }
+
+  .wt-sidenav-item-active {
+    @apply bg-white/15 text-white;
+  }
+}
