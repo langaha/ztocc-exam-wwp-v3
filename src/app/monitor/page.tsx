@@ -15,6 +15,14 @@ type MonitorRow = {
   suggestion: string;
 };
 
+function formatTs(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toISOString().slice(0, 19).replace("T", " ");
+}
+
 function diagnoseV2Call(status: unknown, errorMessage: unknown) {
   const statusNum = status === null || status === undefined || status === "" ? null : Number(status);
   const msg = String(errorMessage ?? "").trim();
@@ -137,7 +145,7 @@ export default async function MonitorPage() {
             </div>
             <div>
               <div className="wt-muted">时间</div>
-              <div>{latestFailure.createdAt}</div>
+              <div>{formatTs(latestFailure.createdAt)}</div>
             </div>
             <div>
               <div className="wt-muted">RequestId</div>
@@ -164,7 +172,7 @@ export default async function MonitorPage() {
             </div>
             <div>
               <div className="wt-muted">最近成功时间</div>
-              <div>{latestSuccess?.createdAt ?? "-"}</div>
+              <div>{latestSuccess ? formatTs(latestSuccess.createdAt) : "-"}</div>
             </div>
             <div>
               <div className="wt-muted">累计成功率</div>
@@ -197,7 +205,7 @@ export default async function MonitorPage() {
             <tbody>
               {rows.map((r) => (
                 <tr key={`${r.createdAt}-${r.requestId}`}>
-                  <td className="wt-td whitespace-nowrap">{r.createdAt}</td>
+                  <td className="wt-td whitespace-nowrap">{formatTs(r.createdAt)}</td>
                   <td className="wt-td whitespace-nowrap">
                     {r.method} {r.apiName}
                   </td>
